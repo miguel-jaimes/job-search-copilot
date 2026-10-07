@@ -135,4 +135,4 @@ MIT. See [LICENSE](LICENSE).
 
 ---
 
-Built by **Miguel Jaimes**, B.S. Business Analytics, UT Dallas (Dec 2026) · [LinkedIn](https://www.linkedin.com/in/miguel-jaimes-7558a2133/)
+Built by **Miguel Jaimes**, B.S. Business Analytics, UT Dallas (Dec 2026) · [LinkedIn](https://www.linkedin.com/in/migueljaimesprofile/)
