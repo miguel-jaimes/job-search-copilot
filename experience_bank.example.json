@@ -1,0 +1,145 @@
+{
+  "profile": {
+    "name": "Jordan Rivera",
+    "email": "jordan.rivera@example.com",
+    "phone": "555-010-0199",
+    "location": "Austin, TX",
+    "linkedin": "https://example.com/jordan-rivera",
+    "summary_options": [
+      "Business Analytics student and data analyst intern who turns raw operational data into clear reports and dashboards.",
+      "Analyst focused on SQL, Python and Power BI, building repeatable reporting that replaces manual spreadsheet work.",
+      "Data-minded problem solver who cleans messy datasets and explains the results to non-technical teams."
+    ]
+  },
+
+  "education": [
+    {
+      "school": "Example State University",
+      "degree": "B.S. in Business Analytics",
+      "location": "Austin, TX",
+      "graduation": "2027-05",
+      "gpa": "3.5",
+      "coursework": ["Database Management", "Predictive Analytics", "Data Visualization", "Business Statistics"],
+      "honors": ["Dean's List"]
+    }
+  ],
+
+  "certifications": [
+    {"name": "Introductory SQL Certificate", "issuer": "Example Online Academy", "date": "2025-08"}
+  ],
+
+  "skills": {
+    "languages": ["SQL", "Python"],
+    "databases": ["PostgreSQL", "MySQL"],
+    "analytics_tools": ["Power BI", "Tableau", "Excel", "Pandas"],
+    "data_engineering": ["ETL", "Data modeling"],
+    "cloud_platforms": ["Git"],
+    "ai_ml": ["Regression", "Time-series forecasting"],
+    "techniques": ["Data cleaning", "Dashboarding", "KPI design", "A/B test analysis"]
+  },
+
+  "experiences": [
+    {
+      "id": "harbor-point-intern",
+      "type": "work",
+      "title": "Data Analyst Intern",
+      "org": "Harbor Point Logistics",
+      "location": "Austin, TX",
+      "start": "2026-05",
+      "end": "2026-08",
+      "context": "Fictional regional shipping company with 12 depots. Intern on the operations reporting team.",
+      "tags": ["sql", "power bi", "python", "logistics", "reporting", "dashboards", "data cleaning"],
+      "bullets": [
+        {
+          "text": "Wrote a library of SQL queries that pulled weekly shipment volumes and delays from the operations database, cutting weekly report preparation from about 4 hours to 1 hour.",
+          "skills": ["SQL", "reporting"],
+          "impact": "75% less time on the weekly report"
+        },
+        {
+          "text": "Built a Power BI dashboard tracking on-time delivery rate across 12 depots, letting regional managers spot underperforming routes without requesting custom reports.",
+          "skills": ["Power BI", "dashboarding", "KPI design"],
+          "impact": "self-serve visibility for regional managers"
+        },
+        {
+          "text": "Cleaned and standardized 18 months of carrier invoice data in Python (pandas), fixing inconsistent date formats and duplicate records before analysis.",
+          "skills": ["Python", "Pandas", "data cleaning"],
+          "impact": "made a year and a half of invoices analyzable"
+        },
+        {
+          "text": "Analyzed late-delivery causes by depot and carrier and presented three recommendations to the operations lead, one of which was adopted for the next quarter.",
+          "skills": ["data analysis", "presentation"],
+          "impact": "recommendation adopted by operations"
+        }
+      ]
+    },
+    {
+      "id": "sales-forecasting-project",
+      "type": "project",
+      "title": "Retail Sales Forecasting (Python)",
+      "org": "Predictive Analytics course",
+      "location": "",
+      "start": "2025-09",
+      "end": "2025-12",
+      "context": "Course project forecasting weekly sales for a public sample retail dataset.",
+      "tags": ["python", "forecasting", "time series", "pandas", "regression"],
+      "bullets": [
+        {
+          "text": "Forecast weekly sales for 45 sample stores using time-series regression in Python, comparing three models and selecting the one with the lowest error on held-out weeks.",
+          "skills": ["Python", "Time-series forecasting", "Regression"],
+          "impact": "chose the most accurate of three models"
+        },
+        {
+          "text": "Engineered holiday and promotion features that improved forecast accuracy over a seasonal baseline, and documented the method in a short report.",
+          "skills": ["Python", "feature engineering"],
+          "impact": "beat the seasonal baseline"
+        }
+      ]
+    },
+    {
+      "id": "churn-dashboard-project",
+      "type": "project",
+      "title": "Customer Churn Dashboard (Tableau)",
+      "org": "Data Visualization course",
+      "location": "",
+      "start": "2025-01",
+      "end": "2025-04",
+      "context": "Course project on a public sample telecom churn dataset.",
+      "tags": ["tableau", "data visualization", "dashboards", "sql"],
+      "bullets": [
+        {
+          "text": "Designed a Tableau dashboard showing churn rate by contract type, tenure and service plan, with filters so viewers could compare customer segments.",
+          "skills": ["Tableau", "dashboarding", "data visualization"],
+          "impact": "interactive view of churn drivers"
+        },
+        {
+          "text": "Used SQL to join customer, billing and support-ticket tables into one analysis view before visualizing it.",
+          "skills": ["SQL", "data modeling"],
+          "impact": "single clean source for the dashboard"
+        }
+      ]
+    },
+    {
+      "id": "bookstore-associate",
+      "type": "work",
+      "title": "Sales Associate",
+      "org": "Campus Bookstore",
+      "location": "Austin, TX",
+      "start": "2023-08",
+      "end": "2025-05",
+      "context": "Part-time retail role during school.",
+      "tags": ["retail", "inventory", "customer service", "data entry"],
+      "bullets": [
+        {
+          "text": "Ran weekly inventory counts and reconciled them against the point-of-sale system, flagging mismatches to the store manager.",
+          "skills": ["inventory reconciliation", "attention to detail"],
+          "impact": "more accurate stock records"
+        },
+        {
+          "text": "Helped customers find course materials during peak semester rush while keeping checkout lines moving.",
+          "skills": ["customer service"],
+          "impact": "smoother peak-season service"
+        }
+      ]
+    }
+  ]
+}

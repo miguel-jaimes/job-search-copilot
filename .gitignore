@@ -1,0 +1,50 @@
+# .gitignore for job-search-copilot
+#
+# Git skips every untracked file that matches a line below.
+#   name        -> that file, in any folder
+#   folder/     -> a whole folder
+#   *           -> wildcard ("anything")
+#   !name       -> exception: re-include a file an EARLIER line excluded
+# Order matters: an "!" line must come after the line it overrides.
+
+# --- Secrets ---------------------------------------------------------
+# The real API key. .env.example (placeholder, no real key) IS committed
+# so other people know which variables to set.
+.env
+.env.*
+!.env.example
+# Job-site logins belong in the Passwords app. Listed here as a backstop.
+job_accounts.txt
+
+# --- Personal data ---------------------------------------------------
+# Real experience bank (phone, email, full work history).
+# The fictional example bank IS committed so anyone can run the project.
+experience_bank*.json
+!experience_bank.example.json
+# Application history and saved screening answers
+applications.csv
+answers.json
+# Tailored resumes and pasted job postings
+resumes/
+tailored_resume.txt
+toyota_analytics_resume.txt
+job.txt
+
+# --- Generated output (rebuilt on every run) -------------------------
+job_feed.csv
+job_details.json
+fit_scores.json
+refresh_log.txt
+
+# --- Backup copies ---------------------------------------------------
+# Any file with ".backup" in its name: old code versions, old data,
+# old feeds. Git history replaces hand-made backups from now on.
+*.backup*
+# Already merged into companies.json
+dfw_companies.json
+
+# --- Python, Jupyter and macOS clutter -------------------------------
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
