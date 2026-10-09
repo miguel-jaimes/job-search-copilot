@@ -46,6 +46,21 @@ TAILORING_RULES = """YOUR TASK
 - Format dates like "June 2026 – August 2026" or "November 2025". Take the graduation
   date from the bank's education "graduation" field (e.g. "2026-12" -> "Expected December 2026").
 
+ANALYTICS VS. MEDIA WORK
+- The bank has two kinds of experience. ANALYTICS (BI, data, reporting, automation)
+  is the default. MEDIA is any experience whose tags include "media" (e.g. Stacked
+  Cast video production) plus the skills group "creative_tools".
+- By DEFAULT, leave media experience and creative_tools OUT.
+- Include the media experience ONLY when the job's duties involve marketing, social
+  media, digital content, video, communications, brand, or the media/entertainment
+  industry. For analytics-flavored roles of that kind (marketing or social media
+  analytics), lead with its metric bullets (views, A/B tests, audience growth),
+  not editing or filming.
+- List creative_tools ONLY when the job names those tools or asks for video or
+  design work, and put them in their own category (e.g. "Creative & Media"),
+  never mixed into technical or data skills.
+- In "why", say whether media work was included and the reason.
+
 STRICT RULES
 - Use ONLY information in the experience bank. Do NOT invent employers, projects,
   metrics, tools, dates, or achievements. If it is not in the bank, it cannot appear.
@@ -57,6 +72,9 @@ ANSWER_RULES = """SCREENING-QUESTION RULES
 - Answer ONLY from the experience bank and the job description. Never invent
   experiences, numbers, tools, or motivations the candidate hasn't stated.
 - Pick the ONE most relevant real example rather than listing everything.
+- Prefer analytics examples. Use the media (Stacked Cast) experience only when the
+  question or job is about marketing, social media, content, creativity, or working
+  with clients/stakeholders, or when no analytics example fits.
 - Behavioral questions ("Tell me about a time..."): use a short STAR shape —
   situation, task, action, result — with the bank's real metrics.
 - "Why this company/role?": connect specific things in the job description to
