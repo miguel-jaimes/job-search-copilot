@@ -36,6 +36,16 @@ job_details.json
 fit_scores.json
 refresh_log.txt
 
+# --- Scorer eval: private parts ---------------------------------------
+# Frozen job postings (copies of employers' ads), my answer key, per-run
+# results and the labeling worksheet. The rubric, prompt versions,
+# results.csv and notes.md ARE committed: they document the method.
+# (Backups like cases.backup-*.jsonl are covered by *.backup* below.)
+eval/cases.jsonl
+eval/labels.csv
+eval/runs/
+eval/postings_to_label.md
+
 # --- Backup copies ---------------------------------------------------
 # Any file with ".backup" in its name: old code versions, old data,
 # old feeds. Git history replaces hand-made backups from now on.

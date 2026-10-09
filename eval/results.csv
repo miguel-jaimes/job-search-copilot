@@ -1,0 +1,11 @@
+timestamp,split,note,model,temperature,runs,cases,agreement_pct,precision_at_k,k,precision_ceiling,missed_strong_as_skip,skip_as_strong,avg_spread,label_flips,failed_calls,cost_usd,run_file
+2026-10-09_023737,tune,baseline,claude-haiku-4-5,default,3,30,30.0,4,10,10,3,2,3.4,4,0,0.354,eval/runs/2026-10-09_023737_tune.csv
+2026-10-09_110627,tune,baseline,claude-haiku-4-5,default,3,30,33.3,5,10,10,2,1,3.1,4,0,0.356,eval/runs/2026-10-09_110627_tune.csv
+2026-10-09_111455,tune,temperature 0,claude-haiku-4-5,0.0,3,30,36.7,5,10,10,2,2,0,0,0,0.351,eval/runs/2026-10-09_111455_tune.csv
+2026-10-09_114336,tune,full Amazon descriptions,claude-haiku-4-5,0.0,3,30,53.3,7,10,10,2,0,0,0,0,0.375,eval/runs/2026-10-09_114336_tune.csv
+2026-10-09_115111,tune,experience rules [rules: prompt_v2.txt],claude-haiku-4-5,0.0,3,30,56.7,7,10,10,0,0,0,0,0,0.409,eval/runs/2026-10-09_115111_tune.csv
+2026-10-09_115850,tune,experience rules v3: band = hard limit [rules: prompt_v3.txt],claude-haiku-4-5,0.0,3,30,66.7,7,10,10,1,0,0,0,0,0.452,eval/runs/2026-10-09_115850_tune.csv
+2026-10-09_122920,tune,"v4: experience read by AI, applied in code [rules: prompt_v4.txt]",claude-haiku-4-5,0.0,3,30,63.3,7,10,10,1,0,0,0,0,0.433,eval/runs/2026-10-09_122920_tune.csv
+2026-10-09_123429,tune,v5: define real gaps (domain is not a gap) [rules: prompt_v5.txt],claude-haiku-4-5,0.0,3,30,50.0,8,10,10,3,0,0,0,0,0.443,eval/runs/2026-10-09_123429_tune.csv
+2026-10-09_124347,holdout,holdout: old production setup,claude-haiku-4-5,default,3,10,50.0,1,3,2,1,0,4.8,2,0,0.128,eval/runs/2026-10-09_124347_holdout.csv
+2026-10-09_124410,holdout,"holdout: final (v4, temp 0) [rules: prompt_v4.txt]",claude-haiku-4-5,0.0,3,10,70.0,1,3,2,1,0,0,0,0,0.15,eval/runs/2026-10-09_124410_holdout.csv

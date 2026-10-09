@@ -37,11 +37,21 @@ BANK_FILE = os.path.join(HERE, "experience_bank.json")
 SCORES_FILE = os.path.join(HERE, "fit_scores.json")
 
 MODEL = "claude-haiku-4-5"
+# Randomness of the AI's answers. 0 = the most repeatable answers (chosen by the
+# eval, Oct 9). None = the API default (1.0). eval_scorer.py --temperature can
+# try other values without changing this line.
+TEMPERATURE = 0          # was None (API default 1.0); the eval showed 0 removes score wobble
 WORKERS = 5                       # jobs scored at the same time
 LOCATION_PENALTY = 0.5            # score multiplier for jobs outside your locations
 # Jobs anywhere in the US get no penalty; only clearly overseas jobs are down-ranked.
 # The location check itself is done in code (see apply_location / us_location.py).
 PREFERRED_LOCATIONS = "anywhere in the United States (on-site, hybrid, or remote)"
+
+# Experience limits (from eval/rubric.md). The AI only READS a posting's required
+# experience; code applies these caps. Used only when the prompt asks the AI for an
+# "experience" field (see experience_cap); the original prompt doesn't, so it's unaffected.
+EXPERIENCE_CAP_3PLUS = 49     # 3+ years required, no substitute allowed -> Skip band
+EXPERIENCE_CAP_2_PRO = 69     # 2+ years of professional/full-time/work experience -> Maybe band
 
 # Approximate Haiku prices (USD per million tokens) — only used for the cost estimate.
 PRICE_IN, PRICE_OUT = 1.00, 5.00
@@ -64,19 +74,40 @@ def compact_profile(bank):
     return "\n".join(lines)
 
 
+# Prompt v4 from the eval (eval/prompt_v4.txt, Oct 9): the AI scores skills and role fit
+# while IGNORING years of experience, and reports the experience facts; experience_cap()
+# applies the rules in code. Tune agreement 33% -> 63%, holdout 50% -> 70% (see eval/notes.md).
 SCORING_RULES = f"""You score how well a job posting fits a candidate. The candidate is a
 new-grad Business Analytics student (graduating soon) with one BI internship,
 class projects, and prior non-analytics work. Judge ONLY from the profile given;
 do not assume skills it doesn't show.
 
-Score 0-100 on fit, IGNORING location (location is checked separately):
+Score 0-100 on fit, IGNORING location AND required years of experience. Both are
+checked separately in code: you report the experience facts below, code applies the rules.
+
+What the score means (use the whole range, not a few habitual numbers):
+- 70-100: the candidate should apply this week. The core duties match the profile.
+- 50-69: worth applying, but with one real gap the profile doesn't meet.
+- 0-49: not worth applying.
+
+Weigh:
 - Skills and experience match to the job's actual duties and requirements (most weight)
-- Seniority: entry-level / new grad / 0-2 years fits well. Roles requiring 3+ years
-  of full-time experience score low; senior, lead or manager roles score very low.
+- Seniority of the role itself: senior, lead or manager roles score below 30.
 - Role type: BI, data, analytics, reporting, and operations-analysis roles fit best.
   Engineering-heavy, sales, legal, or unrelated roles score low.
 
 Location: location_ok is true only if the job is {PREFERRED_LOCATIONS}.
+
+experience: what the posting REQUIRES (ignore preferred / "nice to have" years). Report
+facts only, exactly as written; don't judge whether the candidate meets them.
+- min_years_required: the minimum years required, as a number. Count a range by its
+  minimum ("2-4 years" = 2). If several requirements list years, use the largest of
+  their minimums. 0 if no years are required.
+- kind: "professional" only if the requirement says professional, full-time, work or
+  industry experience. Otherwise "general" (e.g. "3 years of experience in data
+  analysis", "experience with Excel and SQL").
+- substitute_allowed: true only if the posting says education, training, projects or an
+  equivalent combination may substitute for the experience. Otherwise false.
 
 missing_skills: up to 5 specific tools, technologies or skills the job requires or
 prefers that the profile does NOT show. Use short, standard names (e.g. "Snowflake",
@@ -87,6 +118,7 @@ Return ONLY a JSON object, no other text:
 {{"score": <0-100 integer>,
   "reason": "<one line, max 20 words: the main match and the main gap>",
   "seniority": "entry" | "mid" | "senior",
+  "experience": {{"min_years_required": <number>, "kind": "general" | "professional", "substitute_allowed": true | false}},
   "location_ok": true | false,
   "missing_skills": [<0-5 short skill names>],
   "flags": [<zero or more of: "too_senior", "not_analytics", "missing_key_skill", "location", "no_description">]}}"""
@@ -96,16 +128,26 @@ def score_one(client, profile, job, desc):
     body = (f"{SCORING_RULES}\n\n=== CANDIDATE PROFILE ===\n{profile}\n\n"
             f"=== JOB ===\nCompany: {job['company']}\nTitle: {job['title']}\n"
             f"Location: {job['location']}\n\nDescription:\n{desc[:6000] or '(no description available — judge from the title only)'}")
+    extra = {} if TEMPERATURE is None else {"temperature": TEMPERATURE}
     resp = client.messages.create(model=MODEL, max_tokens=300,
-                                  messages=[{"role": "user", "content": body}])
+                                  messages=[{"role": "user", "content": body}], **extra)
     text = resp.content[0].text
     result = json.loads(text[text.find("{"): text.rfind("}") + 1])
-    model_score = max(0, min(100, int(result.get("score", 0))))
+    raw_score = max(0, min(100, int(result.get("score", 0))))
     flags = [f for f in result.get("flags", []) if f != "location"]   # location is set in code
     if not desc and "no_description" not in flags:
         flags.append("no_description")
+    # Experience is decided in code, like location: the AI reports what the posting
+    # requires, experience_cap() applies the rule. No "experience" field = no cap.
+    exp = result.get("experience") if isinstance(result.get("experience"), dict) else None
+    cap = experience_cap(exp)
+    model_score = min(raw_score, cap)
+    if cap <= EXPERIENCE_CAP_3PLUS and "too_senior" not in flags:
+        flags.append("too_senior")
+    extra = {"raw_score": raw_score, "experience": exp, "experience_cap": cap} if exp else {}
     return apply_location({
         "model_score": model_score,
+        **extra,
         "reason": result.get("reason", "").strip(),
         "seniority": result.get("seniority", ""),
         "missing_skills": [str(x).strip() for x in result.get("missing_skills", []) if str(x).strip()][:5],
@@ -114,6 +156,33 @@ def score_one(client, profile, job, desc):
         "company": job["company"],
         "title": job["title"],
     }, job["location"]), resp.usage
+
+
+def experience_cap(exp):
+    """Highest score a job's REQUIRED experience allows (rules from eval/rubric.md).
+
+    The eval showed the AI reading requirements correctly but not applying the rules:
+    it wrote "lacks required 3+ years" and still scored 52 (Maybe), called "2+ years
+    of experience with Tableau" professional experience, and missed a substitution
+    clause. So, like location, the AI only reports the facts and code decides:
+      exp = {"min_years_required": 3, "kind": "general" | "professional",
+             "substitute_allowed": true | false}
+    Returns 100 (no limit) if the facts are missing or unreadable.
+    """
+    if not isinstance(exp, dict):
+        return 100
+    raw = exp.get("min_years_required") or 0
+    m = re.search(r"\d+(?:\.\d+)?", str(raw))    # also reads "3+" or "3 years" as 3
+    if not m:
+        return 100
+    years = float(m.group())
+    if exp.get("substitute_allowed") in (True, "true", "True"):
+        return 100        # "education/projects may substitute": treat as met
+    if years >= 3:
+        return EXPERIENCE_CAP_3PLUS
+    if years >= 2 and str(exp.get("kind", "")).strip().lower() == "professional":
+        return EXPERIENCE_CAP_2_PRO
+    return 100            # 0-1 years, or general experience internships/projects can meet
 
 
 def apply_location(s, location):

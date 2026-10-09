@@ -50,14 +50,24 @@ TITLE_KEYWORDS = [
     "data analyst", "data science", "insights", "reporting",
 ]
 
-# If a title contains any of these, it's dropped (too senior / wrong field).
-# These are matched as plain substrings, so "manager" also catches "managerial".
+# HARD excludes: if a title contains any of these, it's always dropped
+# (too senior, or a field you don't do). Matched as plain substrings, so
+# "manager" also catches "managerial".
 TITLE_EXCLUDE = [
     "senior", "staff", "principal", "lead", "manager", "director",
     "head of", "iii", " ii", "phd",
     "security", "reliability", "software engineer", "machine learning engineer",
-    "sales", "account", "marketing", "recruit", "counsel", "attorney",
+    "counsel", "attorney",
 ]
+
+# FIELD words: they usually mean a sales/marketing/recruiting job ("Account
+# Executive, Analytics"), so they drop a title... UNLESS the title is an analyst
+# role. Then the business area doesn't matter: "Marketing Data Analyst" and
+# "Sales Operations Analyst" are analytics jobs, so they go on to the AI scorer,
+# which judges the actual fit. (Before Oct 8 these were hard excludes, which
+# silently dropped TI's "Web Marketing Program - Digital Experience Data Analyst".)
+TITLE_EXCLUDE_FIELD = ["sales", "account", "marketing", "recruit"]
+_ANALYST_ROLE_RE = re.compile(r"\b(?:analysts?|data scientists?|business intelligence)\b", re.I)
 
 # Short words that must match as WHOLE words. As substrings they misfire:
 # "intern" is inside "International" and "Internal Audit", "vp" can sit inside
@@ -445,13 +455,30 @@ def fetch_amazon(query, client):
                 "location": (j.get("normalized_location") or j.get("location") or "").strip(),
                 "url": f"https://www.amazon.jobs{path}" if path else "https://www.amazon.jobs",
                 "date": _parse_date_loose(j.get("posted_date", "")),
-                "description": _strip_html(j.get("description_short", "")),
+                "description": _amazon_description(j),
             })
         offset += 100
         if offset >= data.get("hits", 0) or offset >= 500:  # safety cap
             break
         time.sleep(REQUEST_PAUSE)
     return out
+
+
+def _amazon_description(j):
+    """The full posting: description + basic and preferred qualifications.
+
+    Amazon's search results include a 200-character teaser (description_short)
+    AND the full text, split into three fields. Until Oct 9 we saved only the
+    teaser, so the AI scorer never saw an Amazon job's required years or tools.
+    The eval caught it: every Amazon case was ~200 characters, cut off mid-sentence.
+    """
+    parts = [_strip_html(j.get("description") or j.get("description_short") or "")]
+    for label, key in (("Basic qualifications", "basic_qualifications"),
+                       ("Preferred qualifications", "preferred_qualifications")):
+        text = _strip_html(j.get(key) or "")
+        if text:
+            parts.append(f"{label}: {text}")
+    return "\n\n".join(p for p in parts if p)
 
 
 FETCHERS = {"greenhouse": fetch_greenhouse, "lever": fetch_lever,
@@ -531,6 +558,9 @@ def title_matches(title):
     if any(x in t for x in TITLE_EXCLUDE):
         return False
     if _EXCLUDE_WORDS_RE.search(t):
+        return False
+    # field words only drop titles that aren't analyst roles
+    if any(x in t for x in TITLE_EXCLUDE_FIELD) and not _ANALYST_ROLE_RE.search(t):
         return False
     return True
 

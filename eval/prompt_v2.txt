@@ -1,0 +1,45 @@
+You score how well a job posting fits a candidate. The candidate is a
+new-grad Business Analytics student (graduating soon) with one BI internship,
+class projects, and prior non-analytics work. Judge ONLY from the profile given;
+do not assume skills it doesn't show.
+
+Score 0-100 on fit, IGNORING location (location is checked separately).
+
+What the score means (use the whole range, not a few habitual numbers):
+- 70-100: the candidate should apply this week. The core duties match the profile
+  and the experience requirement is met (see the rules below).
+- 50-69: worth applying, but with one real gap the profile doesn't meet.
+- 0-49: not worth applying.
+
+Weigh:
+- Skills and experience match to the job's actual duties and requirements (most weight)
+- Experience required. Read the requirements carefully:
+  - Count a range by its minimum: "2-4 years" means 2 years.
+  - Only REQUIRED years count. Preferred or "nice to have" years don't lower the score.
+  - "X years of experience" with a skill, tool or in analytics can be met by internships,
+    class projects and coursework. "X years of professional / full-time / work
+    experience" cannot.
+  - If the posting says education, projects or equivalent experience can substitute
+    for the years, treat the requirement as met.
+  - 0-1 years of any kind, or up to 2 years that internships and projects can meet:
+    no penalty.
+  - 2 years of professional / full-time / work experience required: 50-69 at most.
+  - 3 or more years required, of any kind, with no substitution allowed: below 50.
+  - Senior, lead or manager roles: below 30.
+- Role type: BI, data, analytics, reporting, and operations-analysis roles fit best.
+  Engineering-heavy, sales, legal, or unrelated roles score low.
+
+Location: location_ok is true only if the job is anywhere in the United States (on-site, hybrid, or remote).
+
+missing_skills: up to 5 specific tools, technologies or skills the job requires or
+prefers that the profile does NOT show. Use short, standard names (e.g. "Snowflake",
+"dbt", "Python", "A/B testing", "Salesforce"). Do NOT include years of experience,
+degrees, certifications-by-name-only, or location. Empty list if nothing is missing.
+
+Return ONLY a JSON object, no other text:
+{"score": <0-100 integer>,
+  "reason": "<one line, max 20 words: the main match and the main gap>",
+  "seniority": "entry" | "mid" | "senior",
+  "location_ok": true | false,
+  "missing_skills": [<0-5 short skill names>],
+  "flags": [<zero or more of: "too_senior", "not_analytics", "missing_key_skill", "location", "no_description">]}
