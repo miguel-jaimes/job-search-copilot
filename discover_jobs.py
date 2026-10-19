@@ -1,7 +1,7 @@
 # Job-Search Copilot — Phase 1: Discovery Engine
 #
 # Pulls live job openings from your target companies that use Greenhouse, Lever,
-# or Workday, filters them to the roles you care about (and drops stale postings),
+# Ashby, Workday, Oracle, Amazon or UKG (UltiPro), filters them to the roles you care about (and drops stale postings),
 # scores a rough fit, and writes a ranked CSV feed.
 #
 # WHY YOU RUN THIS LOCALLY: the cloud environment this was built in blocks these
@@ -481,9 +481,100 @@ def _amazon_description(j):
     return "\n\n".join(p for p in parts if p)
 
 
+def fetch_ukg(board_url, client):
+    """UKG Pro Recruiting (formerly UltiPro), used by e.g. Welltower and Sonida.
+
+    Like Workday, UKG has no official jobs API, but its public job board page
+    loads its listings from a JSON endpoint, and we call that same endpoint.
+    The job board URL you give holds everything we need:
+      https://recruiting.ultipro.com/WEL1008WLLT/JobBoard/30969ce4-.../
+        host     = recruiting.ultipro.com   (some boards use recruiting2.)
+        tenant   = WEL1008WLLT              (the company's account code)
+        board_id = 30969ce4-...             (which job board)
+      API (POST) = https://{host}/{tenant}/JobBoard/{board_id}/JobBoardView/LoadSearchResults
+    """
+    m = re.match(r"https?://([^/]+)/([^/]+)/JobBoard/([0-9a-fA-F-]{36})", board_url.strip())
+    if not m:
+        raise ValueError(f"Can't parse UKG job board URL: {board_url}")
+    host, tenant, board = m.groups()
+    base = f"https://{host}/{tenant}/JobBoard/{board}"
+    api = f"{base}/JobBoardView/LoadSearchResults"
+    headers = {"Accept": "application/json", "Content-Type": "application/json",
+               "X-Requested-With": "XMLHttpRequest"}   # what the job board page itself sends
+    out, seen = [], set()
+
+    def collect(term, max_jobs):
+        """Page through one keyword search ('' = every posting)."""
+        skip, page = 0, 50
+        while True:
+            body = {
+                "opportunitySearch": {
+                    "Top": page, "Skip": skip, "QueryString": term,
+                    "OrderBy": [{"Value": "postedDateDesc", "PropertyName": "PostedDate",
+                                 "Ascending": False}],
+                    "Filters": [],
+                },
+                "matchCriteria": {"PreferredJobs": [], "Educations": [],
+                                  "LicenseAndCertifications": [], "Skills": [],
+                                  "hasNoLicenses": False, "SkippedSkills": []},
+            }
+            r = _call(client, "POST", api, json=body, headers=headers)
+            try:
+                data = r.json()
+            except Exception:
+                raise ValueError(f"UKG returned non-JSON (status {r.status_code}). "
+                                 "Check the job board URL in companies.json.")
+            jobs = data.get("opportunities") or data.get("Opportunities") or []
+            total = data.get("totalCount") or data.get("TotalCount") or 0
+            for j in jobs:
+                jid = j.get("Id") or j.get("id") or ""
+                if not jid or jid in seen:
+                    continue
+                seen.add(jid)
+                out.append({
+                    "title": (j.get("Title") or "").strip(),
+                    "location": _ukg_location(j),
+                    "url": f"{base}/OpportunityDetail?opportunityId={jid}",
+                    "date": _parse_date(j.get("PostedDate") or ""),
+                    # Only the short summary comes back here. Like the Amazon lesson from
+                    # the eval: a short description gives the AI scorer less to judge.
+                    "description": _strip_html(j.get("BriefDescription") or ""),
+                })
+            skip += page
+            # No relevance early-stop here: UKG sorts by posted date, not relevance.
+            # Boards are small (hundreds of jobs), so paging to the cap is cheap.
+            if len(jobs) < page or skip >= total or skip >= max_jobs:
+                break
+            time.sleep(REQUEST_PAUSE)
+
+    collect.found = out
+    _run_searches(collect)
+    return out
+
+
+def _ukg_location(j):
+    """UKG lists one or more locations, each with a structured address.
+    Turn them into "Dallas, TX" style text (joined with "; " when several)."""
+    places = []
+    for loc in j.get("Locations") or []:
+        addr = loc.get("Address") or {}
+        city = (addr.get("City") or "").strip()
+        state = addr.get("State") or {}
+        code = (state.get("Code") if isinstance(state, dict) else state) or ""
+        country = addr.get("Country") or {}
+        ccode = (country.get("Code") if isinstance(country, dict) else country) or ""
+        text = ", ".join(x for x in (city, code) if x)
+        if ccode and ccode.upper() not in ("US", "USA"):
+            text = ", ".join(x for x in (text, ccode) if x)
+        text = text or (loc.get("LocalizedDescription") or loc.get("LocalizedName") or "").strip()
+        if text and text not in places:
+            places.append(text)
+    return "; ".join(places)
+
+
 FETCHERS = {"greenhouse": fetch_greenhouse, "lever": fetch_lever,
             "workday": fetch_workday, "oracle": fetch_oracle,
-            "ashby": fetch_ashby, "amazon": fetch_amazon}
+            "ashby": fetch_ashby, "amazon": fetch_amazon, "ukg": fetch_ukg}
 
 
 # ---------------------------------------------------------------------------
