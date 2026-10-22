@@ -4,7 +4,11 @@
 # Greenhouse, Lever, Ashby and Amazon descriptions are saved during discovery
 # (job_details.json). Workday and Oracle only list titles, so their
 # descriptions are fetched live, one posting at a time.
+# UKG (UltiPro) search results only include a short summary, so the full
+# posting is fetched live from its job page too (added Oct 22: the summary had
+# no requirements, so a "4+ years" Welltower role scored 78).
 
+import html
 import json
 import os
 import re
@@ -19,6 +23,22 @@ def strip_html(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _ukg_full_description(page_html):
+    """Pull the full description out of a UKG job page.
+
+    The page has no JSON API for one posting, but it embeds the posting as JSON:
+        var opportunity = new US.Opportunity.CandidateOpportunityDetail({..."Description":"<p>..."});
+    raw_decode reads exactly one JSON object starting at the "{" and ignores the rest.
+    """
+    marker = "CandidateOpportunityDetail("
+    i = page_html.find(marker)
+    if i < 0:
+        return ""
+    data, _ = json.JSONDecoder().raw_decode(page_html, i + len(marker))
+    text = re.sub(r"<[^>]+>", " ", data.get("Description") or "")
+    return re.sub(r"\s+", " ", html.unescape(text)).strip()   # &ndash; -> "–" instead of a blank
+
+
 def load_details():
     try:
         with open(DETAILS_FILE, encoding="utf-8") as f:
@@ -28,7 +48,7 @@ def load_details():
 
 
 def fetch_live(url, ats, client=None):
-    """Fetch one Workday or Oracle posting's description. Returns '' if unsupported."""
+    """Fetch one Workday, Oracle or UKG posting's description. Returns '' if unsupported."""
     import httpx
     own = client is None
     if own:
@@ -61,6 +81,11 @@ def fetch_live(url, ats, client=None):
             parts = [item.get(k, "") for k in
                      ("ExternalDescriptionStr", "ExternalResponsibilitiesStr", "ExternalQualificationsStr")]
             return strip_html(" ".join(p for p in parts if p))
+        if ats == "ukg":
+            # The apply link IS the job page (.../OpportunityDetail?opportunityId=...).
+            r = client.get(url, headers={"Accept": "text/html"})
+            r.raise_for_status()
+            return _ukg_full_description(r.text)
         return ""
     finally:
         if own:
@@ -68,10 +93,17 @@ def fetch_live(url, ats, client=None):
 
 
 def get_description(url, details=None, client=None):
-    """Description for one apply link: saved copy first, live fetch for Workday/Oracle."""
+    """Description for one apply link: saved copy first, live fetch for Workday/Oracle.
+    UKG: live fetch of the full posting, falling back to the saved short summary."""
     details = details if details is not None else load_details()
     info = details.get(url, {})
     desc = info.get("description", "")
+    if info.get("ats") == "ukg":
+        try:
+            full = fetch_live(url, "ukg", client)
+        except Exception:
+            full = ""                     # page changed or site down: keep the summary
+        return full or desc
     if not desc and info.get("ats") in ("workday", "oracle"):
         desc = fetch_live(url, info["ats"], client)
     return desc

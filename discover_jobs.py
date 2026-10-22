@@ -536,8 +536,8 @@ def fetch_ukg(board_url, client):
                     "location": _ukg_location(j),
                     "url": f"{base}/OpportunityDetail?opportunityId={jid}",
                     "date": _parse_date(j.get("PostedDate") or ""),
-                    # Only the short summary comes back here. Like the Amazon lesson from
-                    # the eval: a short description gives the AI scorer less to judge.
+                    # Only the short summary comes back here. The full posting is fetched
+                    # from the job page when it's scored or viewed (descriptions.py).
                     "description": _strip_html(j.get("BriefDescription") or ""),
                 })
             skip += page
