@@ -58,3 +58,7 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 .DS_Store
+
+# Jarvis: practice transcripts and saved debriefs
+jarvis/sessions/
+jarvis/coaching_log.json
